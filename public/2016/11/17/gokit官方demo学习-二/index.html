@@ -1,0 +1,709 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.useso.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="编程," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="示例二:stringsvc2这个示例主要是用中间件来实现日志和跟踪请求的
+传输日志
+任何需要日志记录的组件都需要将 logger 作为依赖，就像数据库连接一样。因此，我们在 main 函数中构造 logger，将它传到需要使用它的组件中。我们从来不去使用一个全局的 logger。我们可以直接将 logger 传入到 stringService 的实现代码中。但是，还有一个更好的方式。使用 中间件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="gokit官方demo学习(二)">
+<meta property="og:url" content="http://toenola.github.com/2016/11/17/gokit官方demo学习-二/index.html">
+<meta property="og:site_name" content="eno boke">
+<meta property="og:description" content="示例二:stringsvc2这个示例主要是用中间件来实现日志和跟踪请求的
+传输日志
+任何需要日志记录的组件都需要将 logger 作为依赖，就像数据库连接一样。因此，我们在 main 函数中构造 logger，将它传到需要使用它的组件中。我们从来不去使用一个全局的 logger。我们可以直接将 logger 传入到 stringService 的实现代码中。但是，还有一个更好的方式。使用 中间件">
+<meta property="og:updated_time" content="2016-11-17T14:44:31.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="gokit官方demo学习(二)">
+<meta name="twitter:description" content="示例二:stringsvc2这个示例主要是用中间件来实现日志和跟踪请求的
+传输日志
+任何需要日志记录的组件都需要将 logger 作为依赖，就像数据库连接一样。因此，我们在 main 函数中构造 logger，将它传到需要使用它的组件中。我们从来不去使用一个全局的 logger。我们可以直接将 logger 传入到 stringService 的实现代码中。但是，还有一个更好的方式。使用 中间件">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'eno'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://toenola.github.com/2016/11/17/gokit官方demo学习-二/"/>
+
+
+
+
+
+  <title> gokit官方demo学习(二) | eno boke </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">eno boke</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://toenola.github.com/2016/11/17/gokit官方demo学习-二/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="eno">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="http://tva4.sinaimg.cn/crop.80.0.1280.1280.180/bf3109dfjw1emqi85kuebj21400zkado.jpg">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="eno boke">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="eno boke" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                gokit官方demo学习(二)
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-17T22:44:01+08:00">
+                2016-11-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <a href="/2016/11/17/gokit官方demo学习-二/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/11/17/gokit官方demo学习-二/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="示例二-stringsvc2"><a href="#示例二-stringsvc2" class="headerlink" title="示例二:stringsvc2"></a>示例二:stringsvc2</h2><p>这个示例主要是用中间件来实现日志和跟踪请求的</p>
+<h3 id="传输日志"><a href="#传输日志" class="headerlink" title="传输日志"></a>传输日志</h3><blockquote>
+<p>任何需要日志记录的组件都需要将 logger 作为依赖，就像数据库连接一样。<br>因此，我们在 main 函数中构造 logger，将它传到需要使用它的组件中。<br>我们从来不去使用一个全局的 logger。<br>我们可以直接将 logger 传入到 stringService 的实现代码中。<br>但是，还有一个更好的方式。使用 中间件 (middleware) ,也常常被称为装饰者(decorator)。<br>middleware 是一个函数，它接收一个 endpoint 作为参数，并且返回一个 endpoint。</p>
+</blockquote>
+<p>定义一个中间件变量:<br><figure class="highlight go"><table><tr><td class="code"><pre><div class="line"><span class="keyword">type</span> Middleware <span class="function"><span class="keyword">func</span><span class="params">(Endpoint)</span> <span class="title">Endpoint</span></span></div></pre></td></tr></table></figure></p>
+<p>补充:在go中函数也是一种变量，我们通过type定义这种变量的类型。拥有相同参数和相同返回值的函数属于同一种类型。</p>
+<p>构造一个日志的中间件函数:<br><figure class="highlight go"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="title">loggingMiddleware</span><span class="params">(logger log.Logger)</span> <span class="title">Middleware</span></span> &#123;</div><div class="line">	<span class="keyword">return</span> <span class="function"><span class="keyword">func</span><span class="params">(next endpoint.Endpoint)</span> <span class="title">endpoint</span>.<span class="title">Endpoint</span></span> &#123;</div><div class="line">		<span class="keyword">return</span> <span class="function"><span class="keyword">func</span><span class="params">(ctx context.Context, request <span class="keyword">interface</span>&#123;&#125;)</span> <span class="params">(<span class="keyword">interface</span>&#123;&#125;, error)</span></span> &#123;</div><div class="line">			logger.Log(<span class="string">"msg"</span>, <span class="string">"calling endpoint"</span>)</div><div class="line">			<span class="keyword">defer</span> logger.Log(<span class="string">"msg"</span>, <span class="string">"called endpoint"</span>)</div><div class="line">			<span class="keyword">return</span> next(ctx, request)</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>并且将他写到我们的处理函数中:<br><figure class="highlight go"><table><tr><td class="code"><pre><div class="line"><span class="keyword">var</span> uppercase endpoint.Endpoint</div><div class="line"><span class="keyword">var</span> countcase endpoint.Endpoint</div><div class="line">uppercase = e.MakeUppercaseEndpoint(svc)</div><div class="line">uppercase = middlewares.LoggingMiddleware(log.NewContext(logger).With(<span class="string">"method"</span>, <span class="string">"uppercase"</span>))(uppercase)</div><div class="line">countcase = e.MakeCountEndpoint(svc)</div><div class="line">countcase = middlewares.LoggingMiddleware(log.NewContext(logger).With(<span class="string">"method"</span>, <span class="string">"count"</span>))(countcase)</div><div class="line">uppercaseHandler := httptransport.NewServer(</div><div class="line">		ctx,</div><div class="line">		uppercase,</div><div class="line">		decodeUppercaseRequest,</div><div class="line">		encodeResponse,</div><div class="line">	)</div><div class="line">countHandler := httptransport.NewServer(</div><div class="line">		ctx,</div><div class="line">		countcase,</div><div class="line">		decodeCountRequest,</div><div class="line">		encodeResponse,</div><div class="line">	)</div></pre></td></tr></table></figure></p>
+<blockquote>
+<p>事实上，这个技术非常有用，不仅仅是在日志方面，很多gokit的模块都被作为中间件实现。</p>
+</blockquote>
+<h3 id="应用日志"><a href="#应用日志" class="headerlink" title="应用日志"></a>应用日志</h3><blockquote>
+<p>那我们如何在我们的应用中级日志呢？比如一些参数需要被带入。<br>事实上我们能够为我们的服务定义一个中间件，能够获得很好的组合效果。<br>示例中StringService被定义为一个接口，我们只需要创建一个新的类型来包装它，执行额外的日志任务。</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="code"><pre><div class="line"><span class="keyword">type</span> loggingMiddleware <span class="keyword">struct</span> &#123;</div><div class="line">	logger log.Logger</div><div class="line">	next   StringService</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mw loggingMiddleware)</span> <span class="title">Uppercase</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="params">(output <span class="keyword">string</span>, err error)</span></span> &#123;</div><div class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(begin time.Time)</span></span> &#123;</div><div class="line">		_ = mw.logger.Log(</div><div class="line">			<span class="string">"method"</span>, <span class="string">"uppercase"</span>,</div><div class="line">			<span class="string">"input"</span>, s,</div><div class="line">			<span class="string">"output"</span>, output,</div><div class="line">			<span class="string">"err"</span>, err,</div><div class="line">			<span class="string">"took"</span>, time.Since(begin),</div><div class="line">		)</div><div class="line">	&#125;(time.Now())</div><div class="line"></div><div class="line">	output, err = mw.next.Uppercase(s)</div><div class="line">	<span class="keyword">return</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mw loggingMiddleware)</span> <span class="title">Count</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="params">(n <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(begin time.Time)</span></span> &#123;</div><div class="line">		_ = mw.logger.Log(</div><div class="line">			<span class="string">"method"</span>, <span class="string">"count"</span>,</div><div class="line">			<span class="string">"input"</span>, s,</div><div class="line">			<span class="string">"n"</span>, n,</div><div class="line">			<span class="string">"took"</span>, time.Since(begin),</div><div class="line">		)</div><div class="line">	&#125;(time.Now())</div><div class="line"></div><div class="line">	n = mw.next.Count(s)</div><div class="line">	<span class="keyword">return</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里是在我们的业务方法之上包装了一层.next指向的就是我们真实的业务函数</p>
+<blockquote>
+<p>然后在入口处调用<br><figure class="highlight go"><table><tr><td class="code"><pre><div class="line">logger := log.NewLogfmtLogger(os.Stderr)</div><div class="line"></div><div class="line"><span class="keyword">var</span> svc StringService</div><div class="line">svc = stringService&#123;&#125;</div><div class="line">svc = loggingMiddleware&#123;logger, svc&#125;</div></pre></td></tr></table></figure></p>
+<p>使用endpoint中间件作为传输环节，比如回路断开和频率限制。<br>在业务逻辑层领域使用服务中间件，比如日志和instrumentation(仪器?)</p>
+</blockquote>
+<h3 id="应用instrumentation"><a href="#应用instrumentation" class="headerlink" title="应用instrumentation"></a>应用instrumentation</h3><blockquote>
+<p>在go kit中instrumentation意味着用包指标来记录你的服务的运行状态，计算执行任务的次数，请求完成后记录消耗时间，以及跟踪所有正在执行的操作的数量，都是instrumentation<br>我们可以使用相同的中间价模式就像我们日志使用的那样</p>
+</blockquote>
+<figure class="highlight go"><table><tr><td class="code"><pre><div class="line"><span class="keyword">type</span> instrumentingMiddleware <span class="keyword">struct</span> &#123;</div><div class="line">	requestCount   metrics.Counter</div><div class="line">	requestLatency metrics.Histogram</div><div class="line">	countResult    metrics.Histogram</div><div class="line">	next           StringService</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mw instrumentingMiddleware)</span> <span class="title">Uppercase</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="params">(output <span class="keyword">string</span>, err error)</span></span> &#123;</div><div class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(begin time.Time)</span></span> &#123;</div><div class="line">		lvs := []<span class="keyword">string</span>&#123;<span class="string">"method"</span>, <span class="string">"uppercase"</span>, <span class="string">"error"</span>, fmt.Sprint(err != <span class="literal">nil</span>)&#125;</div><div class="line">		mw.requestCount.With(lvs...).Add(<span class="number">1</span>)</div><div class="line">		mw.requestLatency.With(lvs...).Observe(time.Since(begin).Seconds())</div><div class="line">	&#125;(time.Now())</div><div class="line"></div><div class="line">	output, err = mw.next.Uppercase(s)</div><div class="line">	<span class="keyword">return</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(mw instrumentingMiddleware)</span> <span class="title">Count</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="params">(n <span class="keyword">int</span>)</span></span> &#123;</div><div class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">(begin time.Time)</span></span> &#123;</div><div class="line">		lvs := []<span class="keyword">string</span>&#123;<span class="string">"method"</span>, <span class="string">"count"</span>, <span class="string">"error"</span>, <span class="string">"false"</span>&#125;</div><div class="line">		mw.requestCount.With(lvs...).Add(<span class="number">1</span>)</div><div class="line">		mw.requestLatency.With(lvs...).Observe(time.Since(begin).Seconds())</div><div class="line">		mw.countResult.Observe(<span class="keyword">float64</span>(n))</div><div class="line">	&#125;(time.Now())</div><div class="line"></div><div class="line">	n = mw.next.Count(s)</div><div class="line">	<span class="keyword">return</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<p>然后在我们的服务中加入<br><figure class="highlight go"><table><tr><td class="code"><pre><div class="line">fieldKeys := []<span class="keyword">string</span>&#123;<span class="string">"method"</span>, <span class="string">"error"</span>&#125;</div><div class="line">requestCount := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts&#123;</div><div class="line">	Namespace: <span class="string">"my_group"</span>,</div><div class="line">	Subsystem: <span class="string">"string_service"</span>,</div><div class="line">	Name:      <span class="string">"request_count"</span>,</div><div class="line">	Help:      <span class="string">"Number of requests received."</span>,</div><div class="line">&#125;, fieldKeys)</div><div class="line">requestLatency := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts&#123;</div><div class="line">	Namespace: <span class="string">"my_group"</span>,</div><div class="line">	Subsystem: <span class="string">"string_service"</span>,</div><div class="line">	Name:      <span class="string">"request_latency_microseconds"</span>,</div><div class="line">	Help:      <span class="string">"Total duration of requests in microseconds."</span>,</div><div class="line">&#125;, fieldKeys)</div><div class="line">countResult := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts&#123;</div><div class="line">	Namespace: <span class="string">"my_group"</span>,</div><div class="line">	Subsystem: <span class="string">"string_service"</span>,</div><div class="line">	Name:      <span class="string">"count_result"</span>,</div><div class="line">	Help:      <span class="string">"The result of each count method."</span>,</div><div class="line">&#125;, []<span class="keyword">string</span>&#123;&#125;) <span class="comment">// no fields here</span></div><div class="line"></div><div class="line"><span class="keyword">var</span> svc StringService</div><div class="line">svc = stringService&#123;&#125;</div><div class="line">svc = loggingMiddleware&#123;logger, svc&#125;</div><div class="line">svc = instrumentingMiddleware&#123;requestCount, requestLatency, countResult, svc&#125;</div></pre></td></tr></table></figure></p>
+<p>目前完整的服务就是stringsvc2</p>
+</blockquote>
+<p>运行结果如下:<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">eno-macdeMacBook-Pro:kit eno$ curl -XPOST -d&apos;&#123;&quot;s&quot;:&quot;hello world~~!!!&quot;&#125;&apos; 127.0.0.1:8080/uppercase</div><div class="line">&#123;&quot;v&quot;:&quot;HELLO WORLD~~!!!&quot;&#125;</div><div class="line">eno-macdeMacBook-Pro:kit eno$ curl -XPOST -d&apos;&#123;&quot;s&quot;:&quot;hello world~~!!!&quot;&#125;&apos; 127.0.0.1:8080/count</div><div class="line">&#123;&quot;v&quot;:16&#125;</div></pre></td></tr></table></figure></p>
+<p>控制台打印的日志:<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">method=uppercase input=&quot;hello world~~!!!&quot; output=&quot;HELLO WORLD~~!!!&quot; err=null took=2.517µs</div><div class="line">method=count input=&quot;hello world~~!!!&quot; n=16 took=735ns</div></pre></td></tr></table></figure></p>
+<p><a href="http://gokit.io/examples/stringsvc.html#first-principles" target="_blank" rel="external">点击查看官方原文</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+<div id="wechat_subscriber" style="display: block; padding: 10px 0; margin: 20px auto; width: 100%; text-align: center">
+    <img id="wechat_subscriber_qcode" src="/images/wechat_code.jpg" alt="eno wechat" style="width: 200px; max-width: 100%;"/>
+    <div>微信扫码加这个逗比为好友</div>
+</div>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/编程/" rel="tag"># 编程</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/11/17/gokit官方demo学习-一/" rel="next" title="gokit官方demo学习(一)">
+                <i class="fa fa-chevron-left"></i> gokit官方demo学习(一)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/11/17/gokit官方demo学习-二/"
+           data-title="gokit官方demo学习(二)" data-url="http://toenola.github.com/2016/11/17/gokit官方demo学习-二/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://tva4.sinaimg.cn/crop.80.0.1280.1280.180/bf3109dfjw1emqi85kuebj21400zkado.jpg"
+               alt="eno" />
+          <p class="site-author-name" itemprop="name">eno</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">3</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/toenola" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/u/3207662047" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#示例二-stringsvc2"><span class="nav-number">1.</span> <span class="nav-text">示例二:stringsvc2</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#传输日志"><span class="nav-number">1.1.</span> <span class="nav-text">传输日志</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用日志"><span class="nav-number">1.2.</span> <span class="nav-text">应用日志</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用instrumentation"><span class="nav-number">1.3.</span> <span class="nav-text">应用instrumentation</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">eno</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"toenola"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
